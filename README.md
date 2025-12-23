@@ -712,7 +712,7 @@ Para reportar problemas o solicitar mejoras:
 - Control de permisos por rol
 
 **Scripts implementados:**
-- 6 scripts (3 User Events, 2 Client Scripts, 2 Suitelets)
+- 6 scripts (2 User Events, 2 Client Scripts, 2 Suitelets)
 - 2 registros personalizados
 - 1 custom list
 - 1 transaction body field
