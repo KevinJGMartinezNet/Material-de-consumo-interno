@@ -721,4 +721,5 @@ Para reportar problemas o solicitar mejoras:
 
 **Desarrollado para NetSuite**  
 **Fecha:** Diciembre 2025
+
 **Hecho por:** Kevin Jesús González Martínez
