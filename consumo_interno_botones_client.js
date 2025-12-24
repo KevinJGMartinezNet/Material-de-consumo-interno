@@ -144,34 +144,42 @@ define(['N/currentRecord', 'N/ui/dialog', 'N/url', 'N/https'],
      * Función para Ajustar inventario después de aprobar
      */
     function ajustarInventario() {
-    try {
-        const record = currentRecord.get();
-        const recordId = record.id;
+        try {
+            const record = currentRecord.get();
+            const recordId = record.id;
 
-        dialog.confirm({
-            title: 'Ajustar Inventario',
-            message: 'Se creará un ajuste de inventario con los artículos de esta solicitud. ¿Desea continuar?'
-        }).then(function (confirmado) {
-            if (!confirmado) return;
+            dialog.confirm({
+                title: 'Ajustar Inventario',
+                message: 'Se creará un ajuste de inventario con los artículos de esta   solicitud. ¿Desea continuar?'
+            }).then(function (confirmado) {
+                if (!confirmado) return;
 
-            const suiteletUrl = url.resolveScript({
-                scriptId: 'customscript_crear_inv_adjustment',
-                deploymentId: 'customdeploy_crear_inv_adjustment',
-                returnExternalUrl: false,
-                params: {
-                    consumoid: recordId
-                }
+                const suiteletUrl = url.resolveScript({
+                    scriptId: 'customscript_crear_inv_adjustment',
+                    deploymentId: 'customdeploy_crear_inv_adjustment',
+                    returnExternalUrl: false,
+                    params: {
+                        consumoid: recordId
+                    }
+                });
+
+                window.location.href = suiteletUrl;
             });
 
-            window.location.href = suiteletUrl;
-        });
-
+        } catch (e) {
+            console.error('Error en ajustarInventario:', e);
+            dialog.alert({
+                title: 'Error',
+                message: 'No fue posible iniciar el ajuste de inventario.'
+            });
+        }
+    }
+    function imprimirPDF(url) {
+    try {
+        window.open(url, '_blank');
     } catch (e) {
-        console.error('Error en ajustarInventario:', e);
-        dialog.alert({
-            title: 'Error',
-            message: 'No fue posible iniciar el ajuste de inventario.'
-        });
+        console.error('Error al abrir PDF', e);
+        alert('No se pudo abrir el PDF');
     }
 }
     
@@ -179,6 +187,7 @@ define(['N/currentRecord', 'N/ui/dialog', 'N/url', 'N/https'],
         pageInit: pageInit,
         aprobarSolicitud: aprobarSolicitud,
         cancelarSolicitud: cancelarSolicitud,
-        ajustarInventario: ajustarInventario
+        ajustarInventario: ajustarInventario,
+        imprimirPDF: imprimirPDF
     };
 });
