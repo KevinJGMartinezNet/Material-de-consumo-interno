@@ -556,6 +556,19 @@ Para cambiar:
 - Actualización automática de estatus
 - Notificación al solicitante
 
+### 7. imprimir_consumo_pdf.js
+
+**Tipo:** Suitelet  
+**Aplica a:** Material de consumo interno
+
+**Función:**
+- `obtenerLineasArticulos()`: Detalla el PDF del número de documento seleccionado
+
+**Características:**
+- Escribe en PDF el número de documento
+- Actualiza los datos dependiendo del estatus que tenga el documento
+- Imprimir / Visualizar / Descargar
+
 ## Campos Personalizados
 
 ### En Material de Consumo Interno
@@ -712,7 +725,7 @@ Para reportar problemas o solicitar mejoras:
 - Control de permisos por rol
 
 **Scripts implementados:**
-- 6 scripts (2 User Events, 2 Client Scripts, 2 Suitelets)
+- 7 scripts (2 User Events, 2 Client Scripts, 3 Suitelets)
 - 2 registros personalizados
 - 1 custom list
 - 1 transaction body field
