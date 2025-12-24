@@ -10,11 +10,9 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
     const STATUS = {
         PENDIENTE: 1,           // Pendiente por aprobar
         APROBADO_JEFE: 2,       // Aprobado por jefe
-        PENDIENTE_AJUSTE: 3,    // Pendiente de ajuste (Ya no se va a necesitar{por ahora})
-        PROCESADO: 4,           // Procesado (Ya no se va a necesitar{por ahora})
-        CANCELADO: 5,           // Cancelado 
-        GENERANDO: 6,           // Generando cuando esta en mood edición
-        COMPLETADO: 7           // Completado cuando ya termina de editar
+        PENDIENTE_AJUSTE: 3,    // Pendiente de ajuste
+        PROCESADO: 4,           // Procesado
+        CANCELADO: 5            // Cancelado
     };
     
     // ROLES CON PERMISOS
@@ -37,8 +35,10 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
             const form = context.form;
             const currentUser = runtime.getCurrentUser();
 
+            // Agregar script de cliente para los botones
             form.clientScriptModulePath = './consumo_interno_botones_client.js';
             
+            // Solo en modo CREATE, setear valores por defecto
             if (type === context.UserEventType.CREATE) {
                 newRecord.setValue({
                     fieldId: 'custrecord_estatus_consumo_interno',
@@ -48,6 +48,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
                 log.debug('beforeLoad', 'Estatus inicial seteado a: Pendiente por aprobar');
             }
             
+            // Agregar botones según el estatus y rol
             if (type === context.UserEventType.VIEW || type === context.UserEventType.EDIT) {
                 const estatus = newRecord.getValue({
                     fieldId: 'custrecord_estatus_consumo_interno'
@@ -55,17 +56,20 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
                 
                 const rolUsuario = currentUser.role;
                 
+                // Verificar si el usuario puede aprobar (Jefe Tienda, Admin, Gerente Contraloría)
                 const puedeAprobar = (
                     rolUsuario == ROLES.JEFE_TIENDA ||
                     rolUsuario == ROLES.ADMINISTRADOR ||
                     rolUsuario == ROLES.GERENTE_CONTRALORIA
                 );
                 
+                // Verificar si puede hacer ajuste (Admin, Gerente Contraloría)
                 const puedeAjustar = (
                     rolUsuario == ROLES.ADMINISTRADOR ||
                     rolUsuario == ROLES.GERENTE_CONTRALORIA
                 );
                 
+                // BOTÓN APROBAR - Solo si está pendiente y tiene permiso
                 if (estatus == STATUS.PENDIENTE && puedeAprobar) {
                     form.addButton({
                         id: 'custpage_btn_aprobar',
@@ -74,6 +78,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
                     });
                 }
                 
+                // BOTÓN CANCELAR - Solo si no está procesado o cancelado y tiene permiso
                 if ((estatus == STATUS.PENDIENTE || estatus == STATUS.APROBADO_JEFE) && puedeAprobar) {
                     form.addButton({
                         id: 'custpage_btn_cancelar',
@@ -88,6 +93,27 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
                         label: 'Ajustar Inventario',
                         functionName: 'ajustarInventario()'
                     });
+                }
+                
+                // BOTÓN IMPRIMIR PDF - Visible para todos
+                try {
+                    const pdfUrl = url.resolveScript({
+                        scriptId: 'customscript_imprimir_consumo_pdf',
+                        deploymentId: 'customdeploy_imprimir_consumo_pdf',
+                        returnExternalUrl: false,
+                        params: {
+                            recordid: newRecord.id
+                        }
+                    });
+                    
+                form.addButton({
+                    id: 'custpage_btn_imprimir',
+                    label: 'Imprimir PDF',
+                    functionName: `imprimirPDF('${pdfUrl}')`
+                });
+
+                } catch (pdfError) {
+                    log.error('Error al agregar botón PDF', pdfError);
                 }
                 
             }
@@ -105,9 +131,11 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
             const newRecord = context.newRecord;
             const type = context.type;
             
+            // Solo en CREATE, setear valores por defecto
             if (type === context.UserEventType.CREATE) {
                 const currentUser = runtime.getCurrentUser();
                 
+                // Setear fecha de solicitud
                 const fechaSolicitud = newRecord.getValue({
                     fieldId: 'custrecord_fecha_solicitud'
                 });
@@ -119,6 +147,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
                     });
                 }
                 
+                // Setear empleado solicitante
                 const solicitante = newRecord.getValue({
                     fieldId: 'custrecord_solicitante'
                 });
@@ -150,6 +179,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
                     }
                 }
                 
+                // Setear estatus inicial
                 const estatus = newRecord.getValue({
                     fieldId: 'custrecord_estatus_consumo_interno'
                 });
@@ -261,6 +291,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
             const type = context.type;
             const recordId = newRecord.id;
             
+            // Obtener estatus
             const nuevoEstatus = newRecord.getValue({
                 fieldId: 'custrecord_estatus_consumo_interno'
             });
@@ -271,6 +302,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
             
             log.debug('afterSubmit', `Tipo: ${type}, Estatus Anterior: ${estatusAnterior}, Nuevo Estatus: ${nuevoEstatus}`);
             
+            // Actualizar nombre del registro con estatus
             try {
                 const statusText = newRecord.getText({
                     fieldId: 'custrecord_estatus_consumo_interno'
@@ -294,6 +326,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
                 log.error('Error al actualizar nombre', nameError);
             }
             
+            // Enviar correos según cambios de estatus
             if (type === context.UserEventType.CREATE && nuevoEstatus == STATUS.PENDIENTE) {
                 enviarCorreoSegunEstatus(recordId, nuevoEstatus);
             }
@@ -334,6 +367,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
             const lineas = obtenerLineasArticulos(recordId);
             
             if (estatus == STATUS.PENDIENTE) {
+                // Enviar a supervisor del solicitante
                 if (solicitante) {
                     const supervisorId = obtenerSupervisorDeEmpleado(solicitante);
                     
@@ -347,6 +381,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
                 }
                 
             } else if (estatus == STATUS.APROBADO_JEFE) {
+                // Enviar a usuarios específicos de gerencia
                 const cuerpo = generarCuerpoCorreo('gerente', recordId, solicitante, ubicacion, subsidiaria, lineas);
                 
                 USUARIOS_GERENCIA.forEach(function(userId) {
@@ -356,6 +391,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
                 log.audit('Correos enviados', `Gerencia: ${USUARIOS_GERENCIA.join(', ')}`);
                 
             } else if (estatus == STATUS.PROCESADO) {
+                // Notificar al solicitante
                 if (solicitante) {
                     const cuerpo = generarCuerpoCorreo('procesado', recordId, solicitante, ubicacion, subsidiaria, lineas);
                     enviarCorreo(solicitante, 'Material de Consumo Interno - Procesado', cuerpo);
@@ -363,6 +399,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
                 }
                 
             } else if (estatus == STATUS.CANCELADO) {
+                // Notificar a todos los involucrados
                 const destinatarios = [solicitante];
                 const supervisorId = obtenerSupervisorDeEmpleado(solicitante);
                 if (supervisorId) destinatarios.push(supervisorId);
@@ -424,9 +461,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
     
     /**
      * Genera el cuerpo del correo
-     * Cambiar el dominio a productivo 
      */
-    //Cambiar dorminio a productivo
     function generarCuerpoCorreo(tipo, recordId, solicitante, ubicacion, subsidiaria, lineas, motivoCancelacion, usuarioCancelo) {
         let cuerpo = '<html><body style="font-family: Arial, sans-serif;">';
         cuerpo += '<div style="max-width: 800px; margin: 0 auto;">';
@@ -449,7 +484,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
             cuerpo += '<p style="font-size: 16px; color: #5cb85c;">Su solicitud de material de consumo interno ha sido <strong>procesada</strong> exitosamente.</p>';
         } else if (tipo === 'cancelado') {
             cuerpo += '<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin-bottom: 20px;">';
-            cuerpo += '<p style="font-size: 16px; color: #721c24; margin: 0;"><strong>SOLICITUD CANCELADA</strong></p>';
+            cuerpo += '<p style="font-size: 16px; color: #721c24; margin: 0;"><strong>⚠️ SOLICITUD CANCELADA</strong></p>';
             cuerpo += '</div>';
             
             if (motivoCancelacion || usuarioCancelo) {
@@ -470,7 +505,7 @@ define(['N/record', 'N/email', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/
         
         if (lineas && lineas.length > 0) {
             cuerpo += '<h3 style="color: #2c5f8d;">Artículos Solicitados:</h3>';
-            cuerpo += '<table border="1" cellpadding="2" cellspacing="0" style="border-collapse: collapse; width: 100%; margin: 20px 0;">';
+            cuerpo += '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; margin: 20px 0;">';
             cuerpo += '<thead><tr style="background-color: #2c5f8d; color: white;">';
             cuerpo += '<th style="text-align: left;">Código</th><th style="text-align: left;">Artículo</th><th style="text-align: center;">Cantidad</th><th style="text-align: left;">Uso</th>';
             cuerpo += '</tr></thead><tbody>';
