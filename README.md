@@ -994,7 +994,7 @@ Para reportar problemas o solicitar mejoras:
 
 **Scripts implementados:**
 - 10 scripts (4 User Events, 2 Client Scripts, 4 Suitelets)
-- 2 registros personalizados
+- 3 registros personalizados
 - 1 custom list
 - 1 transaction body field
 
